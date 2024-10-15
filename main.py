@@ -16,6 +16,7 @@ from email.parser import BytesParser
 
 # Import libraries for different file types
 import docx
+import xlrd
 import pptx
 import csv
 import json as json_module
@@ -142,7 +143,6 @@ def extract_text(file_path):
             else:
                 # For .xls and other formats handled by xlrd
                 try:
-                    import xlrd
                     workbook = xlrd.open_workbook(file_path, on_demand=True)
                     sheets = workbook.sheet_names()
                     for sheet in sheets:
