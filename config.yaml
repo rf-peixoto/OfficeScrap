@@ -11,4 +11,10 @@ Keyword_Groups:
     - "Exact Match"
     - "another-example@domain.org"
     - "some_keyword"
+  Misc:
+    - "password"
+    - "credentials"
+    - "intranet"
+    - "webmail"
+    - "phone"
   
