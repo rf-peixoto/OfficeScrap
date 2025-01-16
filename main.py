@@ -54,6 +54,10 @@ import xml.etree.ElementTree as ET  # Standard library for XML parsing
 class Statistics:
     def __init__(self):
         self.lock = threading.Lock()
+        # New: Store a set of file paths for each keyword found.
+        # Use a set so duplicates are avoided in case the same keyword
+        # is found multiple times in the same file.
+        self.keyword_files = defaultdict(set)
         self.keyword_group_counts = defaultdict(int)
         self.keyword_counts = defaultdict(lambda: defaultdict(int))
         self.filetype_counts = defaultdict(int)
@@ -75,13 +79,24 @@ class Statistics:
         with self.lock:
             self.files_with_multiple_keywords += 1
 
+    # New: Record the file path for the keyword.
+    def update_keyword_file_path(self, keyword, file_path):
+        with self.lock:
+            # Convert to string; store absolute path.
+            self.keyword_files[keyword].add(str(file_path.resolve()))
+
     def to_dict(self):
         with self.lock:
             return {
                 "Keyword_Groups": {k: v for k, v in self.keyword_group_counts.items()},
                 "Keywords": {k: dict(v) for k, v in self.keyword_counts.items()},
                 "FileTypes": {k: v for k, v in self.filetype_counts.items()},
-                "Files_With_Multiple_Keywords": self.files_with_multiple_keywords
+                "Files_With_Multiple_Keywords": self.files_with_multiple_keywords,
+                # New: Include a mapping of each keyword to sorted file paths.
+                "FilesContainingKeyword": {
+                    keyword: sorted(paths)
+                    for keyword, paths in self.keyword_files.items()
+                }
             }
 
 
@@ -203,9 +218,7 @@ def extract_text(file_path):
                     if part.get_content_type() == 'text/plain':
                         text_content += part.get_content()
                     elif part.get_content_type() == 'text/html':
-                        # Optionally, you can strip HTML tags or use BeautifulSoup to extract text
                         html_content = part.get_content()
-                        # Simple regex to remove HTML tags
                         clean_text = re.sub('<[^<]+?>', '', html_content)
                         text_content += clean_text + '\n'
             except Exception as e:
@@ -250,14 +263,11 @@ def compile_keyword_patterns(keyword_groups):
     for group, keywords in keyword_groups.items():
         compiled_patterns[group] = []
         for keyword in keywords:
-            # Escape regex special characters in keyword
             escaped_keyword = re.escape(keyword.lower())
-            # Determine if keyword is a single word or a phrase
             if ' ' in keyword:
                 # For phrases, use word boundaries around the entire phrase
                 pattern = r'(?<!\w)' + escaped_keyword + r'(?!\w)'
             else:
-                # For single words, use word boundaries
                 pattern = r'\b' + escaped_keyword + r'\b'
             try:
                 compiled = re.compile(pattern)
@@ -286,7 +296,6 @@ def copy_file_to_groups(file_path, groups, output_dir):
         group_folder = output_dir / group
         group_folder.mkdir(parents=True, exist_ok=True)
         destination = group_folder / file_path.name
-        # Handle naming conflicts
         if destination.exists():
             base, ext = os.path.splitext(file_path.name)
             counter = 1
@@ -313,11 +322,13 @@ def process_file(file_path, compiled_patterns, output_dir, stats):
     if text_content:
         found = search_keywords(text_content, compiled_patterns)
         if found:
-            # Update statistics
+            # Update statistics for each matched group and keyword
             for group, keywords in found.items():
                 stats.update_keyword_group(group)
                 for keyword in keywords:
                     stats.update_keyword(group, keyword)
+                    # New: Record file path per keyword
+                    stats.update_keyword_file_path(keyword, file_path)
             if len(found) > 1:
                 stats.increment_multiple_keywords()
             # Copy file to corresponding group folders
@@ -356,7 +367,6 @@ def main(data_dir, config_path, output_dir, log_file):
         sys.exit(1)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    # Supported file extensions
     supported_exts = [
         '.txt', '.csv', '.json', '.sql', '.conf', '.cfg',
         '.docx', '.docm', '.dotx', '.dotm',
@@ -364,9 +374,8 @@ def main(data_dir, config_path, output_dir, log_file):
         '.pptx', '.pptm', '.potx', '.potm',
         '.odt', '.ods', '.odp',
         '.pdf', '.xml', '.ini', '.toml',
-        '.eml', '.msg'  # Added email formats
+        '.eml', '.msg'
     ]
-    # Gather all supported files
     all_files = []
     for root, dirs, files in os.walk(data_path):
         for file in files:
@@ -380,10 +389,7 @@ def main(data_dir, config_path, output_dir, log_file):
         logging.info("No supported files found to process.")
         return
 
-    # Define number of threads (you can adjust this number based on your system)
     max_workers = min(32, os.cpu_count() + 4)
-
-    # Process files in parallel
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(process_file, file_path, compiled_patterns, output_path, stats)
@@ -395,9 +401,7 @@ def main(data_dir, config_path, output_dir, log_file):
             except Exception as e:
                 logging.error(f"Unhandled exception during file processing: {e}")
 
-    # Generate statistics output
     generate_statistics(stats, output_path)
-
     logging.info("Processing completed.")
 
 
