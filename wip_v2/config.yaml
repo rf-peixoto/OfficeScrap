@@ -1,28 +1,20 @@
 Keyword_Groups:
-  Sicredi:
-    - 'Sicredi'
-    - "sicredi.com.br"
-  Alelo:
-    - "Alelo"
-    - "Pede Pronto"
-    - "Meu Alelo"
-    - "alelo.com.br"
-    - "meualelo.com.br"
-    - "pedepronto.com.br"
-  Veloe:
-    - "Veloe"
-    - "veloe.com.br"
-    - "veloego.com.br"
-  PWC:
-    - 'Pricewaterhouse'
-    - "pwc.com"
+  GroupA:
+    - "This thing"
+    - "another keyword"
+    - "special@keyword.com"
+  GroupB:
+    - 'Multi word keyword'
+    - "email@example.com"
+    - "key-word_with_special#chars"
+  GroupC:
+    - "Exact Match"
+    - "another-example@domain.org"
+    - "some_keyword"
   Misc:
-    - 'Senha'
-    - "Usuário"
-    - "Password"
-    - "User"
-    - "Pass"
-    - "FTP"
-    - "VPN"
-    - "Credentials"
-    - "Credenciais"
+    - "password"
+    - "credentials"
+    - "intranet"
+    - "webmail"
+    - "username"
+    - "phone"
