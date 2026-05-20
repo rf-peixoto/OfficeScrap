@@ -1,0 +1,28 @@
+Keyword_Groups:
+  Sicredi:
+    - 'Sicredi'
+    - "sicredi.com.br"
+  Alelo:
+    - "Alelo"
+    - "Pede Pronto"
+    - "Meu Alelo"
+    - "alelo.com.br"
+    - "meualelo.com.br"
+    - "pedepronto.com.br"
+  Veloe:
+    - "Veloe"
+    - "veloe.com.br"
+    - "veloego.com.br"
+  PWC:
+    - 'Pricewaterhouse'
+    - "pwc.com"
+  Misc:
+    - 'Senha'
+    - "Usuário"
+    - "Password"
+    - "User"
+    - "Pass"
+    - "FTP"
+    - "VPN"
+    - "Credentials"
+    - "Credenciais"
